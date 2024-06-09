@@ -1,13 +1,13 @@
-import React from 'react'
-import { Badge, Button, Table, Card } from 'react-bootstrap'
-import { useLocation, Link } from 'react-router-dom'
-import EmployeeFilter from './EmployeeFilter.jsx'
-import EmployeeAdd from './EmployeeAdd.jsx'
+import React from 'react';
+import { Badge, Button, Table, Card, Modal } from 'react-bootstrap';
+import { useLocation, Link } from 'react-router-dom';
+import EmployeeFilter from './EmployeeFilter.jsx';
+import EmployeeAdd from './EmployeeAdd.jsx';
 
 function EmployeeTable(props) {
-    const { search } = useLocation()
-    const query = new URLSearchParams(search)
-    const q = query.get('employed')
+    const { search } = useLocation();
+    const query = new URLSearchParams(search);
+    const q = query.get('employed');
 
     const employeeRows = props.employees
         .filter(employee => {
@@ -15,12 +15,12 @@ function EmployeeTable(props) {
             return String(employee.currentlyEmployed) === q;
         })
         .map(employee =>
-        <EmployeeRow 
-            key={employee._id} 
-            employee={employee} 
-            deleteEmployee={props.deleteEmployee} 
-        />
-    );
+            <EmployeeRow 
+                key={employee._id} 
+                employee={employee} 
+                deleteEmployee={props.deleteEmployee} 
+            />
+        );
     return (
         <Card>
             <Card.Header as="h5">All Employees <Badge bg="secondary">{employeeRows.length}</Badge></Card.Header>
@@ -48,21 +48,57 @@ function EmployeeTable(props) {
     )
 }
 
-function EmployeeRow(props) {
-    function onDeleteClick() {
-        props.deleteEmployee(props.employee._id)
+class EmployeeRow extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            modalVisible: false
+        };
+        this.toggleModal = this.toggleModal.bind(this);
+        this.confirmDelete = this.confirmDelete.bind(this);
     }
-    return (
-        <tr>
-            <td><Link to={`/edit/${props.employee._id}`}>{props.employee.name}</Link></td>
-            <td>{props.employee.extension}</td>
-            <td>{props.employee.email}</td>
-            <td>{props.employee.title}</td>
-            <td>{props.employee.dateHired.toDateString()}</td>
-            <td>{props.employee.currentlyEmployed ? 'Yes' : 'No'}</td>
-            <td><Button variant="danger" size="sm" onClick={onDeleteClick}>X</Button></td>
-        </tr>
-    );
+
+    toggleModal() {
+        this.setState({ modalVisible: !this.state.modalVisible });
+    }
+
+    confirmDelete() {
+        this.toggleModal();
+        this.props.deleteEmployee(this.props.employee._id);
+    }
+
+    render() {
+        return (
+            <tr>
+                <td><Link to={`/edit/${this.props.employee._id}`}>{this.props.employee.name}</Link></td>
+                <td>{this.props.employee.extension}</td>
+                <td>{this.props.employee.email}</td>
+                <td>{this.props.employee.title}</td>
+                <td>{this.props.employee.dateHired.toDateString()}</td>
+                <td>{this.props.employee.currentlyEmployed ? 'Yes' : 'No'}</td>
+                <td>
+                    <Button variant="danger" size="sm" onClick={this.toggleModal}>X</Button>
+
+                    <Modal show={this.state.modalVisible} onHide={this.toggleModal} centered>
+                        <Modal.Header closeButton>
+                            <Modal.Title>Confirm Deletion</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            Are you sure you want to delete {this.props.employee.name}?
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={this.toggleModal}>
+                                Cancel
+                            </Button>
+                            <Button variant="danger" onClick={this.confirmDelete}>
+                                Yes
+                            </Button>
+                        </Modal.Footer>
+                    </Modal>
+                </td>
+            </tr>
+        );
+    }
 }
 
 class EmployeeList extends React.Component {
